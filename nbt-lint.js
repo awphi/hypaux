@@ -3,6 +3,8 @@
  * https://github.com/AjaxGb/NBTLint
  */
 
+// Modified to add hideSuffix option for numbers - awphi 10/09/21
+
 (function () {
   "use strict";
 

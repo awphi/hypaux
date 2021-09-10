@@ -7,6 +7,20 @@ const { Item } = require("skyblock-parser");
 const NEU_PATH = "NEU-data";
 const downloadPromise = promisify(download);
 
+function getItem(nbttag) {
+  const d = nbttag.replace(/(,|\[)(\d+):/g, "$1");
+  const parse = nbtLint.parse(d);
+
+  const string = nbtLint.stringify(parse, null, {
+    quoteKeys: true,
+    hideSuffix: true,
+  });
+
+  const json = JSON.parse(string);
+
+  return new Item({ tag: json });
+}
+
 function buildItemDatabase() {
   return fs
     .readdir(`${NEU_PATH}/items`)
