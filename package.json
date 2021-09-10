@@ -1,0 +1,17 @@
+{
+  "name": "hypaux-simple",
+  "version": "1.0.0",
+  "description": "Simple Hypixel Auction Flipping Utilities",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "author": "awphi",
+  "license": "ISC",
+  "dependencies": {
+    "download-git-repo": "^3.0.2",
+    "node-fetch": "^3.0.0",
+    "prismarine-nbt": "^1.6.0",
+    "skyblock-parser": "^0.2.10"
+  }
+}
