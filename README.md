@@ -1,4 +1,4 @@
-# hypaux-client
+# hypaux
 
 ## Project setup
 ```
