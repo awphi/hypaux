@@ -129,6 +129,6 @@ downloadItemData(3)
 */
 
 loadItemData().then(async () => {
-  const hyp = ITEM_DATA.get("HYPERION");
+  const hyp = ITEM_DATA.get("AATROX_BATPHONE");
   console.log(hyp);
 });
