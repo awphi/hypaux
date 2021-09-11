@@ -1,0 +1,48 @@
+diff --git a/node_modules/skyblock-parser/src/item/Item.js b/node_modules/skyblock-parser/src/item/Item.js
+index 9138996..861f58c 100755
+--- a/node_modules/skyblock-parser/src/item/Item.js
++++ b/node_modules/skyblock-parser/src/item/Item.js
+@@ -31,8 +31,11 @@ const attributeSchema = {
+   rarity_upgrades: 'tag.ExtraAttributes.rarity_upgrades',
+   baseStatBoostPercentage: 'tag.ExtraAttributes.baseStatBoostPercentage',
+   dungeon_floor: 'tag.ExtraAttributes.item_tier',
++  dungeon_item_level: 'tag.ExtraAttributes.dungeon_item_level',
++  color: 'tag.ExtraAttributes.color',
+   cake_year: 'tag.ExtraAttributes.new_years_cake',
+   texture: 'tag.SkullOwner.Properties.textures',
++  generator_tier: 'tag.ExtraAttributes.generator_tier'
+ };
+ 
+ /**
+@@ -83,6 +86,7 @@ class Item {
+       this.attributes.timestamp = Date.parse(timestamp) || null;
+       const { name, lore } = this;
+       // Backpack data
++      /*
+       if (name.includes('Backpack')
+         || ['NEW_YEAR_CAKE_BAG', 'BUILDERS_WAND', 'BASKET_OF_SEEDS'].includes(this.getId())) {
+         const extraAttributes = getNestedObjects(nbt, 'tag.ExtraAttributes');
+@@ -93,6 +97,7 @@ class Item {
+           this.inventory = await Promise.all(i.map(async (item) => new Item(item)));
+         }
+       }
++      */
+       if (lore.length > 0) {
+         const loreRaw = lore[lore.length - 1];
+         // Check if lore contains rarity/type
+diff --git a/node_modules/skyblock-parser/src/pet/Pet.js b/node_modules/skyblock-parser/src/pet/Pet.js
+index bba8325..4c32a83 100644
+--- a/node_modules/skyblock-parser/src/pet/Pet.js
++++ b/node_modules/skyblock-parser/src/pet/Pet.js
+@@ -21,10 +21,9 @@ class Pet {
+   #activeAbilities = [];
+ 
+   constructor({
+-    uuid, type, tier: rarity, exp, level: simulatedLevel, active, heldItem = null, skin, candyUsed,
++    type, tier: rarity, exp, level: simulatedLevel, active, heldItem = null, skin, candyUsed,
+   }) {
+     if (typeof type !== 'string') return this;
+-    this.uuid = uuid;
+     this.name = titleCase(type);
+     this.rarity = rarity;
+     this.exp = exp;

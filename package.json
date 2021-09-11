@@ -2,9 +2,9 @@
   "name": "hypaux-simple",
   "version": "1.0.0",
   "description": "Simple Hypixel Auction Flipping Utilities",
-  "main": "index.mjs",
+  "main": "index.js",
   "scripts": {
-    "start": "node index.mjs"
+    "postinstall": "npx patch-package"
   },
   "author": "awphi",
   "license": "ISC",

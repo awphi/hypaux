@@ -3,14 +3,14 @@ require("dotenv").config();
 const fetch = require("node-fetch");
 const fs = require("fs/promises");
 const nbtLint = require("./nbt-lint.js");
-const { Item } = require("skyblock-parser");
+const { Item, Pet } = require("skyblock-parser");
 
 const fileExists = async (path) => !!(await fs.stat(path).catch((e) => false));
 
 const ITEM_DATA_ROOT = "item-data";
 const ITEM_DATA = new Map();
 
-function getItem(nbttag) {
+function nbtToJson(nbttag) {
   const d = nbttag.replace(/(,|\[)(\d+):/g, "$1");
   const parse = nbtLint.parse(d);
 
@@ -20,11 +20,23 @@ function getItem(nbttag) {
     quoteChoice: "onlyDouble",
   });
 
-  const json = JSON.parse(string);
+  const json = { tag: JSON.parse(string) };
+  return json;
+}
 
-  delete json["ExtraAttributes"]["basket_of_seeds_data"];
+async function resolveEntry(key, nbtJson) {
+  if (
+    key.endsWith("_SC") ||
+    key.endsWith("_MINIBOSS") ||
+    key.endsWith("_BOSS") ||
+    key.endsWith("_MONSTER")
+  ) {
+    return null;
+  }
 
-  return new Item({ tag: json });
+  const item = await new Item(nbtJson);
+  ITEM_DATA.set(key, item);
+  return item;
 }
 
 function loadItemData() {
@@ -46,9 +58,9 @@ function loadItemData() {
               throw `Double-up on internalname: ${name}! Names must be unique!`;
             }
 
-            //console.log(name);
             try {
-              ITEM_DATA.set(name, await getItem(json.nbttag));
+              const nbt = nbtToJson(json.nbttag);
+              await resolveEntry(name, nbt);
               return name;
             } catch (e) {
               console.error(name, e);
