@@ -1,11 +1,14 @@
-const { promisify } = require("util");
-const download = require("download-git-repo");
-const fs = require("fs/promises");
+require("dotenv").config();
 
+const fetch = require("node-fetch");
+const fs = require("fs/promises");
+const nbtLint = require("./nbt-lint.js");
 const { Item } = require("skyblock-parser");
 
-const NEU_PATH = "NEU-data";
-const downloadPromise = promisify(download);
+const fileExists = async (path) => !!(await fs.stat(path).catch((e) => false));
+
+const ITEM_DATA_ROOT = "item-data";
+const ITEM_DATA = new Map();
 
 function getItem(nbttag) {
   const d = nbttag.replace(/(,|\[)(\d+):/g, "$1");
@@ -14,58 +17,106 @@ function getItem(nbttag) {
   const string = nbtLint.stringify(parse, null, {
     quoteKeys: true,
     hideSuffix: true,
+    quoteChoice: "onlyDouble",
   });
 
   const json = JSON.parse(string);
 
+  delete json["ExtraAttributes"]["basket_of_seeds_data"];
+
   return new Item({ tag: json });
 }
 
-function buildItemDatabase() {
-  return fs
-    .readdir(`${NEU_PATH}/items`)
-    .then((files) => {
-      const promises = [];
-      for (var i = 0; i < files.length; i++) {
-        const f = files[i];
-        if (f.startsWith("_")) {
-          continue;
-        }
-        promises.push(
-          fs.readFile(`${NEU_PATH}/items/${f}`).then((data) => JSON.parse(data))
-        );
-      }
+function loadItemData() {
+  ITEM_DATA.clear();
 
-      return Promise.all(promises);
-    })
-    .then((items) => {
-      const db = {};
-      for (var i = 0; i < items.length; i++) {
-        const name = items[i].internalname;
+  return fs.readdir(ITEM_DATA_ROOT).then((files) => {
+    const promises = [];
+    for (var i = 0; i < files.length; i++) {
+      const f = files[i];
 
-        if (name in db) {
-          console.error(`Double-up on internalname: ${name}, skipping...`);
-          continue;
-        }
+      promises.push(
+        fs
+          .readFile(`${ITEM_DATA_ROOT}/${f}`)
+          .then((data) => JSON.parse(data))
+          .then(async (json) => {
+            const name = json.internalname;
 
-        db[name] = items[i];
-      }
+            if (ITEM_DATA.has(name)) {
+              throw `Double-up on internalname: ${name}! Names must be unique!`;
+            }
 
-      /*
-      fs.writeFile(
-        `${NEU_PATH}/items/_DATABASE.json`,
-        JSON.stringify(db)
+            //console.log(name);
+            try {
+              ITEM_DATA.set(name, await getItem(json.nbttag));
+              return name;
+            } catch (e) {
+              console.error(name, e);
+              return null;
+            }
+          })
       );
-      */
-      return db;
-    });
+    }
+
+    return Promise.all(promises);
+  });
 }
 
-downloadPromise("MoulBerry/NotEnoughUpdates-REPO", NEU_PATH)
-  .then(() => buildItemDatabase())
-  .then(async (data) => {
-    console.log();
-    //const item = await new Item();
-    //console.log(item);
-    console.log("COMPLETE", Object.keys(data).length);
-  });
+async function downloadItemData(max = null) {
+  if (!process.env.GITHUB_TOKEN) {
+    throw "Cannot download new item database without GITHUB_TOKEN set.";
+  }
+
+  if (!(await fileExists(ITEM_DATA_ROOT))) {
+    await fs.mkdir(ITEM_DATA_ROOT);
+  }
+
+  const opts = {
+    headers: {
+      authorization: `token ${process.env.GITHUB_TOKEN}`,
+    },
+  };
+
+  const master = await fetch(
+    "https://api.github.com/repos/Moulberry/NotEnoughUpdates-REPO/git/trees/master",
+    opts
+  ).then((a) => a.json());
+
+  const itemsUrl = master.tree.filter((a) => a.path == "items")[0].url;
+
+  const items = await fetch(itemsUrl, opts).then((a) => a.json());
+
+  const promises = [];
+  if (!max) {
+    max = items.tree.length;
+  }
+
+  for (var i = 0; i < max; i++) {
+    var a = items.tree[i];
+    const p = fetch(a.url, opts)
+      .then((d) => d.json())
+      .then((json) => Buffer.from(json.content, json.encoding).toString())
+      .then(async (content) => {
+        const datum = JSON.parse(content);
+        await fs.writeFile(
+          `${ITEM_DATA_ROOT}/${datum.internalname}.json`,
+          content
+        );
+        return datum;
+      });
+    promises.push(p);
+  }
+
+  return Promise.all(promises);
+}
+
+/*
+downloadItemData(3)
+  .then((d) => console.log(`Successfully downloaded ${d.length} item entries.`))
+  .catch((e) => console.error(e));
+*/
+
+loadItemData().then(async () => {
+  const hyp = ITEM_DATA.get("HYPERION");
+  console.log(hyp);
+});
