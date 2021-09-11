@@ -7,13 +7,6 @@ var client = new faunadb.Client({
 });
 
 exports.handler = async (event, context) => {
-  if (!("item" in event.queryStringParameters)) {
-    return {
-      statusCode: 400,
-      body: "NONO",
-    };
-  }
-
   var response;
   try {
     response = await client.query(
