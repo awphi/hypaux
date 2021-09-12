@@ -1,5 +1,5 @@
-# hypaux-client
-
+# hypaux
+[![Netlify Status](https://api.netlify.com/api/v1/badges/ff68082b-4cfe-47ae-9ca3-4b77db2acddc/deploy-status)](https://app.netlify.com/sites/hypaux/deploys)
 ## Project setup
 ```
 npm install
