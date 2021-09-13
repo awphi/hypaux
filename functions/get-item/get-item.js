@@ -1,4 +1,6 @@
-// Requires the Fauna module and sets up the query module, which we can use to create custom queries.
+const middy = require("@middy/core");
+const errorLogger = require("@middy/error-logger");
+
 const faunadb = require("faunadb");
 const q = faunadb.query;
 
@@ -6,12 +8,15 @@ var client = new faunadb.Client({
   secret: process.env.FAUNADB_SERVER_SECRET,
 });
 
-exports.handler = async (event, context) => {
+const handler = async (event, context) => {
   var response;
   try {
     response = await client.query(
       q.Get(
-        q.Match(q.Index("item_internalname"), event.queryStringParameters.item)
+        q.Match(
+          q.Index("item_by_internalname"),
+          event.queryStringParameters.item
+        )
       )
     );
   } catch (error) {
@@ -26,3 +31,5 @@ exports.handler = async (event, context) => {
     body: JSON.stringify(response.data),
   };
 };
+
+exports.handler = middy("@middy/core").use(errorLogger());

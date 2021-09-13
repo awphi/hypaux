@@ -11,15 +11,16 @@
   },
   "dependencies": {
     "@middy/core": "^2.5.1",
+    "@middy/error-logger": "^2.5.1",
     "api-key-auth": "^0.2.3",
     "apollo-link-context": "^1.0.20",
     "apollo-link-http": "^1.5.17",
     "apollo-server-lambda": "^2.25.2",
+    "batch-request-js": "^2.0.2",
     "core-js": "^3.6.5",
     "faunadb": "^4.4.1",
     "graphql": "^14.7.0",
     "graphql-tools": "^4.0.8",
-    "lambda-rate-limiter": "^3.0.1",
     "node-fetch": "^2.6.2",
     "skyblock-parser": "^0.2.10",
     "vue": "^3.0.0"

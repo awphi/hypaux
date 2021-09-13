@@ -3,7 +3,8 @@ node_modules
 /dist
 
 
-/item-data
+**/item-data
+**/item-data-full
 
 # local env files
 .env.local
