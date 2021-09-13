@@ -20,8 +20,7 @@ function nbtToJson(nbttag) {
     quoteChoice: "onlyDouble",
   });
 
-  const json = { tag: JSON.parse(string) };
-  return json;
+  return { tag: JSON.parse(string) };
 }
 
 async function resolveEntry(key, nbtJson) {
@@ -35,13 +34,32 @@ async function resolveEntry(key, nbtJson) {
   }
 
   const item = await new Item(nbtJson);
-  ITEM_DATA.set(key, item);
+
+  delete item.active;
+
+  for (key in item.attributes) {
+    item[key] = item.attributes[key];
+  }
+
+  delete item.attributes;
+
+  if ("recipe" in nbtJson) {
+    item.recipe = nbtJson.recipe;
+  }
+
+  if ("crafttext" in nbtJson) {
+    item.crafttext = nbtJson.crafttext;
+  }
+
+  if ("vanilla" in nbtJson) {
+    item.vanilla = nbtJson.vanilla;
+  }
+
   return item;
 }
 
 function loadItemData() {
   ITEM_DATA.clear();
-
   return fs.readdir(ITEM_DATA_ROOT).then((files) => {
     const promises = [];
     for (var i = 0; i < files.length; i++) {
@@ -54,18 +72,11 @@ function loadItemData() {
           .then(async (json) => {
             const name = json.internalname;
 
-            if (ITEM_DATA.has(name)) {
-              throw `Double-up on internalname: ${name}! Names must be unique!`;
-            }
+            const nbt = nbtToJson(json.nbttag);
+            const item = await resolveEntry(name, nbt);
 
-            try {
-              const nbt = nbtToJson(json.nbttag);
-              await resolveEntry(name, nbt);
-              return name;
-            } catch (e) {
-              console.error(name, e);
-              return null;
-            }
+            ITEM_DATA.set(name, item);
+            return item;
           })
       );
     }
@@ -123,12 +134,12 @@ async function downloadItemData(max = null) {
 }
 
 /*
-downloadItemData(3)
+downloadItemData()
   .then((d) => console.log(`Successfully downloaded ${d.length} item entries.`))
   .catch((e) => console.error(e));
 */
 
-loadItemData().then(async () => {
-  const hyp = ITEM_DATA.get("AATROX_BATPHONE");
-  console.log(hyp);
+loadItemData().then(() => {
+  const item = ITEM_DATA.get("ULTIMATE_SOUL_EATER;1");
+  console.log(item);
 });
