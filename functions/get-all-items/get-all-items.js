@@ -9,13 +9,13 @@ var client = new faunadb.Client({
 });
 
 const handler = async (event, context) => {
-  // TODO write some middy middleware so we can prefix params with fauna_ to automatically do this
-  const after = event.queryStringParameters.after
-    ? faunadb.parseJSON(event.queryStringParameters.after)
+  // Maybe write some middy middleware so we can prefix params with fauna_ to automatically do this
+  const after = event.queryStringParameters.fauna_after
+    ? faunadb.parseJSON(event.queryStringParameters.fauna_after)
     : undefined;
 
-  const before = event.queryStringParameters.before
-    ? faunadb.parseJSON(event.queryStringParameters.before)
+  const before = event.queryStringParameters.fauna_before
+    ? faunadb.parseJSON(event.queryStringParameters.fauna_before)
     : undefined;
 
   const response = await client.query(
