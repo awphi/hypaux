@@ -2,7 +2,7 @@ const middy = require("@middy/core");
 const errorLogger = require("@middy/error-logger");
 
 const faunadb = require("faunadb");
-const { Paginate, Match, Index } = faunadb.query;
+const q = faunadb.query;
 
 var client = new faunadb.Client({
   secret: process.env.FAUNADB_SERVER_SECRET,
@@ -19,7 +19,7 @@ const handler = async (event, context) => {
     : undefined;
 
   const response = await client.query(
-    Paginate(Match(Index("all_items_by_internalname")), {
+    q.Paginate(q.Match(q.Index("all_items_by_internalname")), {
       before: before,
       after: after,
     })

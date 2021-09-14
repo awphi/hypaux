@@ -3,18 +3,7 @@ const errorLogger = require("@middy/error-logger");
 const { getItemDefinitions } = require("./item-definition-api.js");
 
 const faunadb = require("faunadb");
-const {
-  Create,
-  Replace,
-  If,
-  Exists,
-  Paginate,
-  Match,
-  Index,
-  Let,
-  Var,
-  Select,
-} = faunadb.query;
+const q = faunadb.query;
 
 var client = new faunadb.Client({
   secret: process.env.FAUNADB_SERVER_SECRET,
@@ -27,15 +16,15 @@ const handler = async (event, context) => {
   defs.forEach((def) => {
     const p = client
       .query(
-        Let(
+        q.Let(
           {
-            X: Match(Index("item_by_internalname"), def.internalname),
+            X: q.Match(q.Index("item_by_internalname"), def.internalname),
             y: { data: def },
           },
-          If(
-            Exists(Var("X")),
-            Replace(Select([0], Paginate(Var("X"))), Var("y")),
-            Create("items", Var("y"))
+          q.If(
+            q.Exists(q.Var("X")),
+            q.Replace(q.Select([0], q.Paginate(q.Var("X"))), q.Var("y")),
+            q.Create("items", q.Var("y"))
           )
         )
       )
