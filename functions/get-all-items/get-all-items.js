@@ -1,5 +1,6 @@
 const middy = require("@middy/core");
-const errorLogger = require("@middy/error-logger");
+const httpErrorHandler = require("@middy/http-error-handler");
+// TODO introduce rate limiting once it works
 
 const faunadb = require("faunadb");
 const q = faunadb.query;
@@ -9,7 +10,8 @@ var client = new faunadb.Client({
 });
 
 const handler = async (event, context) => {
-  // Maybe write some middy middleware so we can prefix params with fauna_ to automatically do this
+  console.log(process.data);
+  //TODO write some middy middleware so we can prefix params with fauna_ to automatically do this
   const after = event.queryStringParameters.fauna_after
     ? faunadb.parseJSON(event.queryStringParameters.fauna_after)
     : undefined;
@@ -18,17 +20,24 @@ const handler = async (event, context) => {
     ? faunadb.parseJSON(event.queryStringParameters.fauna_before)
     : undefined;
 
-  const response = await client.query(
-    q.Paginate(q.Match(q.Index("all_items_by_internalname")), {
-      before: before,
-      after: after,
-    })
-  );
+  try {
+    const response = await client.query(
+      q.Paginate(q.Match(q.Index("all_items_by_internalname")), {
+        before: before,
+        after: after,
+      })
+    );
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify(response),
-  };
+    return {
+      statusCode: 200,
+      body: JSON.stringify(response),
+    };
+  } catch (error) {
+    throw {
+      statusCode: 400,
+      message: JSON.stringify(error),
+    };
+  }
 };
 
-exports.handler = middy(handler).use(errorLogger());
+exports.handler = middy(handler).use(httpErrorHandler());

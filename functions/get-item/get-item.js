@@ -1,5 +1,6 @@
 const middy = require("@middy/core");
-const errorLogger = require("@middy/error-logger");
+const rateLimiter = require("../../rate-limiter-middleware.js");
+const httpErrorHandler = require("@middy/http-error-handler");
 
 const faunadb = require("faunadb");
 const q = faunadb.query;
@@ -9,9 +10,8 @@ var client = new faunadb.Client({
 });
 
 const handler = async (event, context) => {
-  var response;
   try {
-    response = await client.query(
+    const response = await client.query(
       q.Get(
         q.Match(
           q.Index("item_by_internalname"),
@@ -19,17 +19,27 @@ const handler = async (event, context) => {
         )
       )
     );
-  } catch (error) {
+
     return {
+      statusCode: 200,
+      body: JSON.stringify(response.data),
+    };
+  } catch (error) {
+    throw {
       statusCode: 400,
-      body: JSON.stringify(error),
+      message: JSON.stringify(error),
     };
   }
-
-  return {
-    statusCode: 200,
-    body: JSON.stringify(response.data),
-  };
 };
 
-exports.handler = middy("@middy/core").use(errorLogger());
+// It seems netlify dev will reload the function file each time it's ran
+// thus the rate limiter middleware is constantly remade and no state is stored
+//  > WHY?!
+exports.handler = middy(handler)
+  .use(httpErrorHandler())
+  .use(
+    rateLimiter({
+      interval: 10000,
+      maxRequestsPerInterval: 10,
+    })
+  );
